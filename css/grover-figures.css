@@ -1,0 +1,13 @@
+body {
+	font-family: "Computer Modern Serif";
+}
+
+.circ-label {
+	fill: white;
+	pointer-events: none;
+}
+
+#tooltip text {
+	font-family: "Inconsolata", sans-serif;
+	font-weight: bold;
+}

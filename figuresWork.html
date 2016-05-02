@@ -4,6 +4,7 @@
 
 <link rel="stylesheet" href="css/grover-figures.css"/>
 <link rel="stylesheet" href="css/Serif/cmun-serif.css"/>
+<link href='https://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
 
 <script type="text/x-mathjax-config">
   MathJax.Hub.Config({
@@ -26,5 +27,130 @@
 </head>
 <body>
 <h1>Hello World</h1>
+
+<script type="text/javascript">
+var h_stack = 110;
+var w_stack = 700;
+var y_origin = 55;
+var n_bits = 3;
+
+var w_tip = 35;
+var h_tip = 17;
+
+var n_circs = Math.pow(2, n_bits);
+var circ_dat = new Array(n_circs).fill(0);
+var circ_r = 20;
+
+function myLine(svgHandle, startCoord, endCoord) {
+  svgHandle.append("line").style("stroke", "gray")
+    .attr("x1", startCoord[0]).attr("y1", startCoord[1])
+    .attr("x2", endCoord[0]).attr("y2", endCoord[1])
+    .attr("opacity", 0.25);
+}
+
+function gpos(x, y) {
+  return "translate(" + x + "," + y + ")";
+}
+
+var svg = d3.select("body").append("svg").attr("width", w_stack).attr("height", h_stack);
+
+myLine(svg, [0.5, y_origin], [w_stack - 0.5, y_origin]);
+myLine(svg, [0.5, y_origin + 4], [0.5, y_origin - 4]);
+myLine(svg, [w_stack - 0.5, y_origin + 4], [w_stack - 0.5, y_origin - 4]);
+
+var circs = svg.append("g").attr("id", "circs").selectAll("circle").data(circ_dat).enter().append("circle");
+var labels = svg.append("g").attr("id", "circ-labels").selectAll("text")
+                .data(circ_dat).enter().append("text").attr("class", "circ-label");
+var tooltip = svg.append("g").attr("id", "tooltip")
+                .style("opacity", 0)
+                .attr("transform", gpos(-w_tip - 1, y_origin + 1.5*h_tip));
+tooltip.append("rect")
+        .attr("width", w_tip)
+        .attr("height", h_tip)
+        .attr("rx", 3)
+        .attr("ry", 3)
+        .style("fill", "lightgrey")
+tooltip.append("text")
+        .text("000")
+        .attr("text-anchor", "middle")
+        .attr("x", (w_tip / 2.0) - 0.5)
+        .attr("y", h_tip - 3.5);
+
+function dec2bin(dec) {
+  var bitstring = "";
+  var pad = new Array(n_bits).fill(0).join('');
+  while (dec > 0) {
+    var bit = dec % 2;
+    var quot = Math.floor(dec / 2);
+    bitstring = bit.toString() + bitstring;
+    dec = quot;
+  }
+  return pad.substring(0, n_bits - bitstring.length) + bitstring;
+}
+
+function circX(i) {
+  var spacing = (w_stack - 3*circ_r) / (n_circs - 1);
+  return i*spacing + 1.5*circ_r;
+}
+
+circs.attr("cx", function(val, i) { return circX(i); })
+  .attr("cy", y_origin)
+  .attr("r", circ_r)
+  .attr("fill", "black")
+  .attr("opacity", 0.85)
+  .on("mouseover", function(val, i) {
+    d3.select(this)
+      .transition()
+      .duration(100)
+      .attr("cy", y_origin - 8)
+      .attr("r", circ_r + 3);
+    d3.select(labels[0][i])
+      .transition()
+      .duration(100)
+      .attr("y", y_origin - 3);
+
+    d3.select("#tooltip text").html(dec2bin(i)); 
+  
+    d3.select("#tooltip")
+      .attr("transform", gpos(circX(i) - 0.5*w_tip, y_origin + 1.5*h_tip))
+      .transition()
+      .duration(100)
+      .style("opacity", 1);
+  })
+  .on("mouseout", function(val, i) {
+    d3.select(this)
+      .transition()
+      .duration(200)
+      .attr("cy", y_origin)
+      .attr("r", circ_r);
+    d3.select(labels[0][i])
+      .transition()
+      .duration(200)
+      .attr("y", y_origin + 5);
+
+    d3.select("#tooltip")
+      .transition()
+      .duration(200)
+      .style("opacity", 0);
+  })
+  .on("click", function(val, i) {
+    d3.select(".chosen-circ")
+      .transition()
+      .duration(100)
+      .attr("class", "")
+      .style("fill", "black");
+    d3.select(this)
+      .transition()
+      .duration(100)
+      .attr("class", "chosen-circ")
+      .style("fill", "gray");
+  });
+
+labels.text(function(val, i) { return i; })
+  .attr("text-anchor", "middle")
+  .attr("x", function(val, i) { return circX(i); })
+  .attr("y", y_origin + 5);
+
+</script>
 </body>
 </html>
