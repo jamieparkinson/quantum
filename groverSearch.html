@@ -30,6 +30,7 @@
   <!-- Global D3 variables etc -->
   <script type="text/javascript"> 
     var n_bits = 4; // Number of qubits
+    var needle_idx = -1; // Haven't chosen a needle yet
   </script>
 
 <body>
@@ -44,7 +45,7 @@
 1 &amp; x = x_0 \\
 0 &amp; x \neq x_0
 \end{cases}\]</span></p>
-<p>And so the search problem is to apply the oracle to successive values of <span class="math">\(x\)</span> until it returns 1 (the needle is found).</p>
+<p>And so the search problem is to apply the oracle to successive values of <span class="math">\(x\)</span> until it returns 1 (the needle is found). For our interactive demonstration, select a needle in Fig. 1.</p>
 
 <!-- Figure 1 -->
 <div class="svg-fig">

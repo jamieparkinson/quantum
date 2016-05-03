@@ -1,6 +1,6 @@
 div.svg-fig {
 	width: 55%;
-	padding: 5px 0 20px 0;
+	padding: 15px 0 30px 0;
 }
 
 div.svg-fig .fig-caption {
@@ -24,4 +24,15 @@ div.svg-fig svg#fig1 #tooltip text {
 	font-family: "Inconsolata", sans-serif;
 	font-weight: bold;
 	font-size: 13.5px;
+}
+
+.graph-rect {
+	fill: black;
+	opacity: 0.85;
+}
+
+.mean-line {
+	stroke-width: 0.85;
+	stroke: red;
+	stroke-dasharray: 3, 1;
 }

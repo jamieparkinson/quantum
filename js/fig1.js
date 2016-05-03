@@ -7,7 +7,6 @@ var h_tip = 17;
 
 var n_circs = Math.pow(2, n_bits); // N
 var circ_dat = new Array(n_circs).fill(0);
-var chosen = -1; // Haven't picked a circle yet
 var circ_r = 13;
 
 // Helper for drawing straight lines
@@ -99,7 +98,7 @@ circs.attr("cx", function(val, i) { return circX(i); })
       .transition()
       .duration(200)
       .attr("cy", y_origin) // Move back down
-      .attr("r", function() { return i == chosen ? circ_r + 3 : circ_r; }); // Return to original size
+      .attr("r", function() { return i == needle_idx ? circ_r + 3 : circ_r; }); // Return to original size
     d3.select(labels[0][i])
       .transition()
       .duration(200)
@@ -111,7 +110,7 @@ circs.attr("cx", function(val, i) { return circX(i); })
       .style("opacity", 0); // Hide tooltip again
   })
   .on("click", function(val, i) { // Make the clicked circle grey
-    chosen = i;
+    needle_idx = i;
     d3.select(".chosen-circ") // Un-grey any previously clicked circle
       .transition()
       .duration(100)

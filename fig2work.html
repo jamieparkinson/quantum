@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Figure 2</title>
+  <link rel="stylesheet" href="css/Serif/cmun-serif.css"/>
+  <link rel="stylesheet" href="css/grover-figures.css"/>
+  <link href='https://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+
+  <style>
+  body { font-family: "Computer Modern Serif"; }
+  </style>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      showMathMenu: false,
+      "HTML-CSS": {
+        scale: 90
+      },
+      TeX: {
+      Macros: {
+        braket: ['{\\langle #1 \\rangle}', 1],
+        Abs: ['\\left\\lvert #2 \\right\\rvert_{\\text{#1}}', 2, ""],
+        bra: ['{\\left\\langle #1\\right|}',1], 
+        ket: ['{\\left| #1\\right\\rangle}',1], 
+      }}
+    });
+  </script>
+  <script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+
+  <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+  <!-- Global D3 variables etc -->
+  <script type="text/javascript"> 
+    var n_bits = 4; // Number of qubits
+    var needle_idx = -1; // Haven't chosen a needle yet
+
+    function myLine(svgHandle, startCoord, endCoord) {
+      return svgHandle.append("line")
+                      .attr("x1", startCoord[0]).attr("y1", startCoord[1])
+                      .attr("x2", endCoord[0]).attr("y2", endCoord[1]);
+    }
+
+    function drawMyAxis(w, origin, svgHandle, endHeight) {
+      var group = svgHandle.append("g").attr("id", "axis");
+      myLine(group, [0.5, origin], [w - 0.5, origin]);
+      myLine(group, [0.5, origin + endHeight], [0.5, origin - endHeight]);
+      myLine(group, [w - 0.5, origin + endHeight], [w - 0.5, origin - endHeight]);
+    }
+  </script>
+</head>
+<body>
+<h1>Figure 2</h1>
+
+<input type="button" value="Ground State" onclick="doGroundState()" />
+<input type="button" value="Hadamard" onclick="doHadamard()" />
+<input type="button" value="Oracle" onclick="doOracle()" />
+<input type="button" value="Mean" onclick="doMean()" />
+
+<script type="text/javascript">
+var h_algplot = 200;
+var w_algplot = 580;
+var origin_algplot = h_algplot / 2.0;
+
+var n_bars = Math.pow(2, n_bits);
+var bar_heights = new Array(n_bars).fill(1.0 / Math.sqrt(n_bars));
+
+var bar_scale = d3.scale.linear()
+                  .domain([-1.0, 1.0])
+                  .range([-100, 100]);
+
+var bar_padding = 12;
+
+var svg = d3.select("body").append("svg").attr("width", w_algplot).attr("height", h_algplot);
+
+var rects = svg.append("g").attr("id", "rects")
+              .selectAll("rect")
+              .data(bar_heights)
+              .enter()
+              .append("rect");
+
+drawMyAxis(w_algplot, origin_algplot, svg, 5);
+d3.select("#axis").selectAll("line").style("opacity", 0.65).style("stroke", "gray");
+
+function makeBar(h) {
+  return {
+    "y" : origin_algplot - ((h < 0) ? bar_scale(0) : Math.abs(bar_scale(h))),
+    "height" : Math.abs(bar_scale(h))
+  };
+}
+
+var needle_idx = 5;
+
+var rect_width = (w_algplot / n_bars) - bar_padding;
+rects.attr("width", rect_width)
+     .each(function(h) { d3.select(this).attr(makeBar(0)); })
+     .attr("x", bar_padding / 2.0)
+     .classed({"graph-rect" : true, "needle-rect" : function(h,i) { return (i == needle_idx); } });
+
+function doGroundState() {
+  rects.transition("groundstate")
+       .duration(400)
+       .ease("exp")
+       .attr("y", function(h) { return makeBar(h)["y"]; })
+       .attr("height", function(h) { return makeBar(h)["height"]; });
+}
+
+function doHadamard() {
+  rects.transition("hadamard")
+       .duration(350)
+       .ease("quad")
+       .attr("x", function(h, i) {
+          return i * (w_algplot / n_bars) + 0.5*bar_padding;
+       });
+}
+
+var r_dot = 3;
+var oracleDot = svg.append("circle")
+                   .attr("cx", -1.5*r_dot)
+                   .attr("cy", origin_algplot)
+                   .attr("r", r_dot)
+                   .style("fill", "red");
+
+function doOracle() {
+  var totalTime = 1300;
+  var scaleFactor = 1.2;
+
+  var dotOffset = 0.5 * w_algplot / n_bars
+  oracleDot.attr("cx", dotOffset);
+  oracleDot.transition()
+           .duration(totalTime)
+           .ease("sin-in-out")
+           .attr("cx", w_algplot + r_dot);
+
+  rects.transition("oracle")
+       .duration(totalTime / n_bars)
+       .delay(function(h,i) { 
+          var easy = d3.ease("sin-out-in");
+          return easy(i / (n_bars - 1)) * totalTime;
+       })
+       .style("fill", "gray")
+       .each("start", function() {
+          var thisRec = d3.select(this);
+          if (thisRec.attr("class").indexOf("needle-rect") == -1) {
+            thisRec
+            .transition()
+            .delay(120)
+            .duration(200)
+            .style("fill", "black");
+          } else {
+            thisRec
+            .transition()
+              .duration(180)
+              .ease("exp")
+              .attr("width", scaleFactor*rect_width)
+              .attr("x", needle_idx * (w_algplot / n_bars) + 0.5*bar_padding + 0.5*rect_width*(1 - scaleFactor))
+              .attr("y", function(h) { return makeBar(h*scaleFactor)["y"]; })
+              .attr("height", function(h) { return makeBar(h*scaleFactor)["height"]; })
+            .transition()
+              .ease("linear")
+              .delay(180 + 20)
+              .duration(150)
+              .attr("width", rect_width)
+              .attr("x", needle_idx * (w_algplot / n_bars) + 0.5*bar_padding)
+              .attr("y", function(h) { return makeBar(h)["y"]; })
+              .attr("height", function(h) { return makeBar(h)["height"]; })
+            .transition()
+              .delay(180 + 20 + 150 + 200)
+              .duration(250)
+              .ease("cubic-in")
+              .attr("y", function(h) { return makeBar(0)["y"]; })
+              .attr("height", function(h) { return makeBar(0)["height"]; })
+              .transition()
+              .duration(250)
+              .ease("cubic-out")
+              .attr("y", function(h) { return makeBar(-h)["y"]; })
+              .attr("height", function(h) { return makeBar(-h)["height"]; })
+
+            bar_heights[needle_idx] *= -1;
+            rects.data(bar_heights);
+          }
+       });
+}
+
+function doMean() {
+  var mean_height = d3.mean(bar_heights);
+  var mean_y = makeBar(mean_height)["y"];
+  var meanLine = myLine(svg, [-1, mean_y], [-1, mean_y]);
+  meanLine.attr("class", "mean-line");
+
+  meanLine.transition("meanline")
+    .duration(750)
+    .ease("quad")
+    .attr("x2", w_algplot + 1);
+
+  bar_heights = bar_heights.map(function(old) {
+    return 2*mean_height - old;
+  });
+  rects.data(bar_heights);
+  console.log(bar_heights[needle_idx]);
+
+  rects.transition("meanInversion")
+       .duration(1200)
+       .delay(750 + 300)
+       .attr("y", function(h) { return makeBar(h)["y"]; })
+       .attr("height", function(h) { return makeBar(h)["height"]; });
+
+  meanLine.transition("disappearLine")
+    .duration(750)
+    .delay(750 + 300 + 1200 + 200)
+    .ease("quad")
+    .attr("x1", w_algplot + 1);
+}
+
+</script>
+</body>
+</html>
