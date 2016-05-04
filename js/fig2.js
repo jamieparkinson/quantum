@@ -66,7 +66,8 @@ function reset() {
   rects.each(function(h) { d3.select(this).attr(makeBar(0)); })
        .attr("x", bar_padding / 2.0)
        .classed({"graph-rect" : true,
-               "needle-rect" : function(h,i) { return (i == needle_idx); } }); // Add a class to the needle bar
+               "needle-rect" : function(h,i) { return (i == needle_idx); } }) // Add a class to the needle bar
+       .style("fill", "black");
 
   last_step = 0;
   val_R = 0;

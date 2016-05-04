@@ -91,6 +91,7 @@ div.svg-fig svg#fig2 .mean-line {
 	opacity: 0.6;
 	width: 1.85rem;
 	display: inline-block;
+	cursor: default;
 }
 
 a.play-icon.in-list {
