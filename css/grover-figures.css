@@ -26,13 +26,83 @@ div.svg-fig svg#fig1 #tooltip text {
 	font-size: 13.5px;
 }
 
-.graph-rect {
+div.svg-fig svg#fig2 .graph-rect {
 	fill: black;
 	opacity: 0.85;
 }
 
-.mean-line {
+div.svg-fig svg#fig2 .mean-line {
 	stroke-width: 0.85;
 	stroke: red;
 	stroke-dasharray: 3, 1;
+}
+
+.info-div {
+	text-align: right;
+	background-color: #F0F0F0;
+	display: inline-block;
+	float: right;
+	padding: 3px 5px;
+	border-radius: 2px;
+	pointer-events: none;
+}
+
+#steps-list {
+	float: left;
+	width: 600px;
+	display: block;
+	padding: 0;
+	padding-left: 35px;
+}
+
+#steps-container {
+	width: 110%;
+	position: relative;
+	overflow: hidden;
+	display: block;
+	padding: 0;
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+#fig2-container {
+	float: left;
+	width: 580px;
+	margin-left: 45px;
+	padding: 0;
+	opacity: 0;
+}
+
+#fig2-container.graph-scroll-fixed {
+	position: fixed;
+	display: block;
+	top: 30%;
+	left: calc(600px - 150px + 45px + 35px + 12.5%);
+}
+
+#fig2-container.graph-scroll-below {
+	position: absolute;
+	bottom: 0px;
+	margin-left: calc(600px - 150px + 35px + 32px + 12.5%);
+}
+
+.play-icon {
+	margin: 0 0 -0.6rem 0;
+	opacity: 0.6;
+	width: 1.85rem;
+	display: inline-block;
+}
+
+a.play-icon.in-list {
+	float: right;
+	margin-right: 15px;
+}
+
+a.play-icon.in-list:hover {
+	opacity: 0.8;
+}
+
+a.play-icon.in-list:active {
+	width: 2.1rem;
+	margin-right: 12px;
 }

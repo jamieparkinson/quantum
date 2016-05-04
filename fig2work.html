@@ -33,7 +33,7 @@
   <!-- Global D3 variables etc -->
   <script type="text/javascript"> 
     var n_bits = 4; // Number of qubits
-    var needle_idx = -1; // Haven't chosen a needle yet
+    var needle_idx = 7; // Haven't chosen a needle yet
 
     function myLine(svgHandle, startCoord, endCoord) {
       return svgHandle.append("line")
@@ -57,6 +57,8 @@
 <input type="button" value="Oracle" onclick="doOracle()" />
 <input type="button" value="Mean" onclick="doMean()" />
 
+<div id="prob-div" style="opacity: 0;">\(P(x_0) \approx \)&nbsp;<span id="prob-val"></span></div>
+
 <script type="text/javascript">
 var h_algplot = 200; // SVG canvas size
 var w_algplot = 580;
@@ -75,7 +77,7 @@ var bar_scale = d3.scale.linear()
 
 var bar_padding = 12; // Padding between bars
 
-var svg = d3.select("body").append("svg").attr("width", w_algplot).attr("height", h_algplot); // Create SVG object
+var svg = d3.select("body").append("svg").attr("width", w_algplot).attr("height", h_algplot).attr("id", "fig2"); // Create SVG object
 
 var noise = function() { return noiseOn ? d3.random.normal(0.0, noiseSigma)() : 0 }; // Noise function gives normally distributed noise if turned on
 bar_heights = bar_heights.map(function(clean) { return clean + noise(); }); // Apply noise to the amplitudes
@@ -105,6 +107,11 @@ function makeBar(h) {
 
 var needle_idx = 15;
 
+// Gets probability of measuring the needle to 2 dp
+function probMeasure() {
+  return Math.min(1.00, Math.pow(bar_heights[needle_idx], 2).toFixed(2));
+}
+
 var rect_width = (w_algplot / n_bars) - bar_padding; // Caulculate width of each bar
 rects.attr("width", rect_width) // "Draw" bars but with zero height now
      .each(function(h) { d3.select(this).attr(makeBar(0)); })
@@ -131,6 +138,11 @@ function doHadamard() {
        .attr("x", function(h, i) { // Space the bars out correctly
           return i * (w_algplot / n_bars) + 0.5*bar_padding;
        });
+
+  d3.select("#prob-val").html(probMeasure()) // Update the probability
+  d3.select("#prob-div").transition()
+                        .duration(150)
+                        .style("opacity", 1);
 }
 
 // Draw a red dot to symbolize the action of the oracle
@@ -192,7 +204,7 @@ function doOracle() {
               .attr("x", needle_idx * (w_algplot / n_bars) + 0.5*bar_padding)
               .attr(makeBar(h + thisNoise))
             .transition("flip") // Flip it down to 0
-              .delay(250 + 20 + 250 + 600)
+              .delay(250 + 20 + 250 + 300)
               .duration(300)
               .ease("cubic-in")
               .attr(makeBar(0))
@@ -229,6 +241,8 @@ function doMean() {
        .delay(750 + 300)
        .attr("y", function(h) { return makeBar(h)["y"]; })
        .attr("height", function(h) { return makeBar(h)["height"]; });
+
+  setTimeout(function(){ d3.select("#prob-val").html(probMeasure()); }, 750+300+1200); // Update the measurement probability
 
   meanLine.transition("disappearLine") // Remove the mean marker
     .duration(750)

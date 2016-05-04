@@ -5,17 +5,11 @@ var y_origin = 40; // What we will use as the origin for the y-axis
 var w_tip = 35; // Tooltip dimensions
 var h_tip = 17;
 
+var needle_idx = 7; // Default
+
 var n_circs = Math.pow(2, n_bits); // N
 var circ_dat = new Array(n_circs).fill(0);
 var circ_r = 13;
-
-// Helper for drawing straight lines
-function myLine(svgHandle, startCoord, endCoord) {
-  svgHandle.append("line").style("stroke", "gray")
-    .attr("x1", startCoord[0]).attr("y1", startCoord[1])
-    .attr("x2", endCoord[0]).attr("y2", endCoord[1])
-    .attr("opacity", 0.25);
-}
 
 // Helper for translating groups
 function gpos(x, y) {
@@ -25,10 +19,8 @@ function gpos(x, y) {
 // Create canvas
 var svg = d3.select("#fig1").attr("width", w_stack).attr("height", h_stack);
 
-// Draw some "axis" lines 
-myLine(svg, [0.5, y_origin], [w_stack - 0.5, y_origin]);
-myLine(svg, [0.5, y_origin + 4], [0.5, y_origin - 4]);
-myLine(svg, [w_stack - 0.5, y_origin + 4], [w_stack - 0.5, y_origin - 4]);
+drawMyAxis(w_stack, y_origin, svg, 4);
+d3.select("#fig1 > #axis").selectAll("line").style("opacity", 0.25).style("stroke", "gray");
 
 /// Create our 3 main components: the circes, their text, and the tooltip
 var circs = svg.append("g").attr("id", "circs").selectAll("circle").data(circ_dat).enter().append("circle");
@@ -71,19 +63,20 @@ function circX(i) {
 // Set up circles
 circs.attr("cx", function(val, i) { return circX(i); })
   .attr("cy", y_origin)
-  .attr("r", circ_r)
-  .attr("fill", "black")
+  .attr("r", function(val, i) { return (i != needle_idx) ? circ_r : (circ_r + 3); })
+  .attr("fill", function(val, i) { return (i != needle_idx) ? "black" : "gray"; })
+  .classed("chosen-circ", function(val, i) { return i == needle_idx; })
   .attr("opacity", 0.85)
   .on("mouseover", function(val, i) {
     d3.select(this)
       .transition()
       .duration(100)
-      .attr("cy", y_origin - 8) // Move up
+      .attr("cy", y_origin - 5) // Move up
       .attr("r", circ_r + 3); // Grow slightly
     d3.select(labels[0][i])
       .transition()
       .duration(100)
-      .attr("y", y_origin - 3); // Move label as well
+      .attr("y", y_origin); // Move label as well
 
     d3.select("#tooltip text").html(dec2bin(i)); // Change tooltip text to binary representation of this bit
   
@@ -110,18 +103,29 @@ circs.attr("cx", function(val, i) { return circX(i); })
       .style("opacity", 0); // Hide tooltip again
   })
   .on("click", function(val, i) { // Make the clicked circle grey
-    needle_idx = i;
-    d3.select(".chosen-circ") // Un-grey any previously clicked circle
-      .transition()
-      .duration(100)
-      .attr("class", "")
-      .style("fill", "black")
-      .attr("r", circ_r);
-    d3.select(this)
-      .transition()
-      .duration(100)
-      .attr("class", "chosen-circ")
-      .style("fill", "gray");
+    if (last_step <=2) {
+      needle_idx = i;
+      d3.select(".chosen-circ") // Un-grey any previously clicked circle
+        .transition()
+        .duration(100)
+        .attr("class", "")
+        .style("fill", "black")
+        .attr("r", circ_r);
+      d3.select(this)
+        .transition()
+        .duration(100)
+        .attr("class", "chosen-circ")
+        .style("fill", "gray");
+    } else {
+      d3.select(this)
+        .transition("err")
+        .duration(100)
+        .style("fill", "red")
+        .transition("err")
+        .delay(200)
+        .duration(250)
+        .style("fill", "black");
+    }
   });
 
 labels.text(function(val, i) { return i; }) // Put the labels in the right place
