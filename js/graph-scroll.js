@@ -31,10 +31,11 @@ function graphScroll() {
     var isBelow1 = pageYOffset > (belowStart - 0.3*window.innerHeight);
     if (isBelow != isBelow1){
       isBelow = isBelow1
-      graph.classed('graph-scroll-below', isBelow)
       if (isBelow) {
+        resize()
         graph.style("right", null);
       }
+      graph.classed('graph-scroll-below', isBelow)
     }
     var isFixed1 = !isBelow && pageYOffset > (containerStart - 0.3*window.innerHeight)
     if (isFixed != isFixed1){
@@ -46,7 +47,7 @@ function graphScroll() {
     }
 
     // My additions to move the <ol> of algorithm steps
-    var containerTopMovey = pageYOffset - containerStart + 0.8*window.innerHeight;
+    var containerTopMovey = pageYOffset - containerStart + 0.7*window.innerHeight;
     
     var moveLeft = slideOffset;
     var moveVelocity = 0.8;

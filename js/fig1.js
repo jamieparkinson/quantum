@@ -1,6 +1,6 @@
 var h_stack = 90; // SVG canvas size
 var w_stack = 580;
-var y_origin = 40; // What we will use as the origin for the y-axis
+var y_origin = 44; // What we will use as the origin for the y-axis
 
 var w_tip = 35; // Tooltip dimensions
 var h_tip = 17;
@@ -28,7 +28,7 @@ var labels = svg.append("g").attr("id", "circ-labels").selectAll("text")
                 .data(circ_dat).enter().append("text").attr("class", "circ-label");
 var tooltip = svg.append("g").attr("id", "tooltip")
                 .style("opacity", 0)
-                .attr("transform", gpos(-w_tip - 1, y_origin + h_tip));
+                .attr("transform", gpos(-w_tip - 1, 0));
 tooltip.append("rect")
         .attr("width", w_tip)
         .attr("height", h_tip)
@@ -81,7 +81,7 @@ circs.attr("cx", function(val, i) { return circX(i); })
     d3.select("#tooltip text").html(dec2bin(i)); // Change tooltip text to binary representation of this bit
   
     d3.select("#tooltip")
-      .attr("transform", gpos(circX(i) - 0.5*w_tip, y_origin + h_tip)) // Move tooltip
+      .attr("transform", gpos(circX(i) - 0.5*w_tip, 0)) // Move tooltip
       .transition()
       .duration(100)
       .style("opacity", 1); // Show tooltip
