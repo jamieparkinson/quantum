@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Grover's Search Algorithm</title>
+  <link rel="stylesheet" href="css/Serif/cmun-serif.css"/>
+  <link rel="stylesheet" href="css/tufte.css"/>
+  <link rel="stylesheet" href="css/grover-figures.css"/>
+  <link href='https://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      showMathMenu: false,
+      "HTML-CSS": {
+        scale: 90
+      },
+      TeX: {
+      Macros: {
+        braket: ['{\\langle #1 \\rangle}', 1],
+        Abs: ['\\left\\lvert #2 \\right\\rvert_{\\text{#1}}', 2, ""],
+        bra: ['{\\left\\langle #1\\right|}',1], 
+        ket: ['{\\left| #1\\right\\rangle}',1], 
+      }}
+    });
+  </script>
+  <script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+
+  <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+  <!-- Global D3 variables etc -->
+  <script type="text/javascript"> 
+    var n_bits = 4; // Number of qubits
+
+    function myLine(svgHandle, startCoord, endCoord) {
+      return svgHandle.append("line")
+                      .attr("x1", startCoord[0]).attr("y1", startCoord[1])
+                      .attr("x2", endCoord[0]).attr("y2", endCoord[1]);
+    }
+
+    function drawMyAxis(w, origin, svgHandle, endHeight) {
+      var group = svgHandle.append("g").attr("id", "axis");
+      myLine(group, [0.5, origin], [w - 0.5, origin]);
+      myLine(group, [0.5, origin + endHeight], [0.5, origin - endHeight]);
+      myLine(group, [w - 0.5, origin + endHeight], [w - 0.5, origin - endHeight]);
+    }
+  </script>
+
+  <script type="text/javascript" src="js/graph-scroll.js"></script>
+<body>
+
+<div id = "tufte_container">
+
+<h1 id="grovers-search-algorithm">Grover’s Search Algorithm</h1>
+
+<p>
+  Grover’s algorithm is a quantum search algorithm, discovered by Lov Grover [<span class="citation">1</span>]. A search algorithm, given some database of things, aims to find one specific item - a “needle in a haystack”.
+</p>
+
+<h2 id="constructing-the-algorithm">Constructing the Algorithm</h2>
+<p>
+  One of many full descriptions of the algorithm is given in the excellent book by Nielsen and Chuang [<span class="citation">2</span>] but we summarise it briefly here. We set up the algorithm as follows.
+</p>
+
+<p>
+  We say that there are <span class="math">\(N\)</span> items in our database, and we index them accordingly (although their order is unimportant) by the integers in the range <span class="math">\(0\)</span> to <span class="math">\(N-1\)</span>, calling this index <span class="math">\(x\)</span>. We can represent any value of <span class="math">\(x\)</span> with <span class="math">\(n\)</span> classical bits<sup>1</sup>
+
+  <span class="marginnote">
+    1. We do this by using the ordering of the sequence 0s and 1s; each consecutive digit in the sequence represents an decreasing (starting from <span class="math">\(n-1\)</span>) power of 2, and the integer is given by the sum of these powers of 2 multiplied by the digit. An example makes this clear:
+    <span class="math">
+      \[ 0101 \rightarrow 0 \cdot 2^3 + 1 \cdot 2^2 + 0 \cdot 2^1 + 1 \cdot 2^0 = 4 + 1 = 5 \]
+    </span>
+  </span>
+
+  , where <span class="math">\(2^{n-1} \leq N \leq 2^n - 1\)</span>, and so for convenience we choose <span class="math">\(N\)</span> to be some integer power <span class="math">\(n\)</span> of 2. We identify the specific item we want - the needle - as having the index <span class="math">\(x_0\)</span> and define an <em>oracle</em> function <span class="math">\(f\)</span>:
+</p>
+<p>
+  <span class="math">
+    \[f(x)=
+    \begin{cases}
+    1 &amp; x = x_0 \\
+    0 &amp; x \neq x_0
+    \end{cases}\]
+  </span>
+</p>
+<p>
+  And so the search problem is to apply the oracle to successive values of <span class="math">\(x\)</span> until it returns 1 (the needle is found). For our interactive demonstration, select a needle in Fig. 1.
+</p>
+
+<!-- Figure 1 -->
+<div class="svg-fig">
+  <svg id="fig1"></svg>
+  <div class="fig-caption">
+    <strong>Figure 1.</strong> We will illustrate the Grover search for the case of <span class="math">\(N=16\)</span> (ie with 4 qubits). Select the needle that we will find by clicking on the respective circle above. You can see the binary representation of its index by hovering over the circle.
+  </div>
+</div>
+
+<p>
+  As this is a quantum algorithm, we need to make the oracle work on quantum states and so we define an <em>oracle operator</em> <span class="math">\(O\)</span>:
+</p>
+<p>
+  <span class="math">
+    \[O( \ket{x} \ket{b} ) = \ket{x} \ket{b \oplus f(x)}\]
+  </span>
+</p>
+<p>
+  Where <span class="math">\(\ket{b}\)</span> is the <em>oracle qubit</em> and <span class="math">\(\oplus\)</span> denotes binary modular addition<sup>2</sup>
+
+  <span class="marginnote" style="margin-top: -140px">
+    2. Modular addition is like normal addition except the number line is periodic - when we reach a certain value we go back to the beginning. For example, on a 12-hour clock if we add 6 hours to 11 then rather than getting 17, we get <span class="math">\(11 + 6 \pmod {12} = 5\)</span>. Our oracle operator, as with most of information theory, uses addition modulo 2 - the only numbers we’re allowed are 0 and 1! For example, <span class="math">\(1 \oplus 0 = 1 \pmod 2 = 1\)</span>, but <span class="math">\(1 \oplus 1 = 2 \pmod 2 = 0\)</span>.
+  </span>
+
+  .
+</p>
+<p>
+  Now we perform the first “quantum” step: say that we put the oracle qubit <span class="math">\(\ket{b}\)</span> in the <span class="math">\(\ket{-}\)</span> state, equal to <span class="math">\((\ket{0} - \ket{1})/\sqrt{2}\)</span>. Now the action of the oracle operator is:
+</p>
+<p>
+  <span class="math">
+    \[\begin{align}
+    O( \ket{x} \ket{-} ) &amp; = \frac{1}{\sqrt{2}} \ket{x} \left( \ket{0 \oplus f(x)} - \ket{1 \oplus f(x)} \right) \\
+    &amp; = (-1)^{f(x)} \ket{x} \left( \frac{\ket{0} - \ket{1}}{\sqrt{2}} \right) \\
+    &amp; = (-1)^{f(x)} \ket{x} \ket{-}
+    \end{align}\]
+  </span>
+</p>
+<p>
+  So, for the special case of the oracle qubit being <span class="math">\(\ket{-}\)</span>, we can say that the oracle operator flips the phase of the index bit <span class="math">\(\ket{x}\)</span> if and only if it is the needle (ie <span class="math">\(x=x_0\)</span>). As the oracle qubit is unchanged by this operation, we can effectively ignore it.
+</p>
+
+<h2 id="performing-the-search">Performing the search</h2>
+
+<p>
+  Now that we have set up the search problem and provided an operator that can change the phase of the needle qubit, we can give the procedure for the Grover search<sup>3</sup>
+
+  <span class="marginnote" style="margin-top: -260px;">
+    3. We use the obvious extension of the binary notation explained in the first sidenote:
+
+    <span class="math">
+      \[\ket{x} \equiv \ket{x_1 x_2 \cdots x_n}\]
+    </span>
+
+    where
+
+    <span class="math">
+      \[x = x_1 2^{n-1} + x_2 2^{n-2} + \cdots + x_n 2^0\]
+    </span>
+
+    For example, <span class="math">\(\ket{5} \equiv \ket{0101}\)</span>. The important thing here is to remember that some state <span class="math">\(\ket{x}\)</span> is <strong>not</strong> a state of a single qubit; it is a state of <span class="math">\(n\)</span> qubits.
+  </span>
+
+  . Steps 1 and 2 are just to get the system in an appropriate starting state, and step 3 is where the “magic” happens.
+</p>
+
+<div class="list-container" id="steps-container">
+  <ol style="list-style-type: decimal" id="steps-list">
+
+    <li>
+      For a haystack size of <span class="math">\(N = 2^n\)</span>, prepare <span class="math">\(n+1\)</span> qubits in the ground state:
+
+      <a class="play-icon in-list" onclick="doGroundState()" id="groundStateBtn">
+        <i class="material-icons">play_circle_filled</i>
+      </a>
+
+      <span class="math">
+        \[\ket{\psi_1} = \ket{0}^{\otimes n} \ket{0}\]
+      </span>
+
+    </li>
+    <li>
+      Put the first <span class="math">\(n\)</span> qubits (the haystack qubits) in a state of uniform superposition, and then put the last qubit, the oracle qubit, in the state described above. That is to say, we apply <span class="math">\((H^{\otimes n} \otimes H X)\)</span> to all of the qubits.
+
+      <a class="play-icon in-list" onclick="doHadamard()" id="hadamardBtn">
+        <i class="material-icons">play_circle_filled</i>
+      </a>
+
+      <span class="math">
+        \[\ket{\psi_2} = \frac{1}{\sqrt{N}} \sum_{x=0}^{N-1} \ket{x} \ket{-}\]
+      </span>
+    </li>
+    <li>
+      <em><strong>The Grover Iteration</strong></em> - perform this step <span class="math">\(R\)</span> times, where the value of <span class="math">\(R\)</span> is yet to be specified.
+       
+      <br />
+      <ol style="list-style-type: lower-roman; margin-top: 15px">
+        <li>
+          <em>Apply the oracle operator <span class="math">\(O\)</span>, defined above, to all the qubits.</em>
+        </li>
+        <li>
+          <em>Apply the Hadamard transform <span class="math">\(H^{\otimes n}\)</span> to the haystack qubits.</em>
+        </li>
+        <li>
+          <em>Multiply all states which are not <span class="math">\(\ket{0}\)</span> by <span class="math">\(-1\)</span>. This can be written as an operator, <span class="math">\(2 \ket{0}\bra{0} - I\)</span>, where <span class="math">\(I\)</span> is the identity matrix of dimension <span class="math">\(N\)</span>.</em>
+        </li>
+        <li>
+          <em>Apply the <span class="math">\(H^{\otimes n}\)</span> to the haystack qubits again.</em>
+        </li>
+      </ol>
+      <br />
+
+      It can be shown<sup>5</sup>
+
+      <!-- The sidenote has been moved outside of the container div -->
+
+      that the above steps <span class="math">\(i-iv\)</span> can be written as a single operator:
+
+      <span class="math">
+        \[(2\ket{\phi} \bra{\phi} - I)O\]
+      </span>
+
+      Where <span class="math">\(\ket{\phi}\)</span> is the uniform superposition of the haystack qubits (ie <span class="math">\(\ket{\psi_2}\)</span> without the oracle qubit):
+
+      <span class="math">
+        \[\ket{\phi} = \frac{1}{\sqrt{N}} \sum_{x=0}^{N-1} \ket{x}\]
+      </span>
+
+      It is extremely useful to note that the part of this operation in the brackets (steps <span class="math">\(ii-iv\)</span>) can be seen geometrically as an <em>inversion about the mean</em>. This means that the whole Grover iteration can be seen as the repeated application of 2 operations:
+
+      <ol style="list-style-type: lower-roman; display: block; width: 45%; margin: 20px auto 5px auto;">
+        <div style="float: right; margin-left: -7px; margin-top: 11px;">
+          <img src="repeat.svg" alt="Repeat" style="margin: 0; opacity: 0.6"/>
+        </div>
+        <li>
+          <em>Oracle</em>
+          <a class="play-icon in-list" onclick="doOracle()" id="oracleBtn">
+            <i class="material-icons">play_circle_filled</i>
+          </a>
+        </li>
+        <li>
+          <em>Inversion about the Mean</em>
+          <a class="play-icon in-list" onclick="doMean()" id="meanBtn">
+            <i class="material-icons">play_circle_filled</i>
+          </a>
+        </li>
+      </ol>
+
+      <br/>
+
+      Let’s consider why this is. The operator <span class="math">\(F = 2(\ket{\phi} \bra{\phi} - I)\)</span> leaves <span class="math">\(\ket{\phi}\)</span> invariant and flips the sign of any state orthogonal to <span class="math">\(\ket{\phi}\)</span>. As <span class="math">\(\ket{\phi}\)</span> is the uniform superposition over all <span class="math">\(n\)</span>-qubit states, the overlap of it and any other <span class="math">\(n\)</span>-qubit state expressed in the computational basis, <span class="math">\(\ket{\psi} = \sum_x a_x \ket{x}\)</span>, is simply the sum of <span class="math">\(\ket{\psi}\)</span>’s eigenvalues multiplied by <span class="math">\(\ket{\phi}\)</span>’s normalisation factor, <span class="math">\(1/\sqrt{N}\)</span>:
+
+      <span class="math">
+        \[\bra{\phi} \psi \rangle = \frac{1}{\sqrt{N}}\sum_x a_x\]
+      </span>
+
+      It follows that:
+
+      <span class="math">
+        \[\begin{align}
+        F \ket{\psi} &amp; = (2(\ket{\phi} \bra{\phi} - I)) \ket{\psi} \\
+        &amp; = 2 \bra{\phi} \psi \rangle \ket{\phi} - \ket{\psi} \\
+        &amp; = 2 \sum_x \left( \frac{1}{\sqrt{N}} \frac{1}{\sqrt{N}} \sum_i a_i \right) \ket{x} - \sum_x a_x \ket{x} \\
+        &amp; = \sum_x \Bigg[ 2 \underbrace{\left( \frac{1}{N} \sum_i a_i \right)}_{\text{ (mean of the } a_i \text{)}} - a_x \Bigg] \ket{x}
+        \end{align}\]
+      </span> 
+
+      Which clearly maps amplitudes across the mean.
+  </li>
+  <li>
+    After our repeated application of step 3, we should have
+
+    <span class="math">
+      \[\ket{\psi_4} \approx \ket{x_0}\ket{-}\]
+    </span>
+
+    And so we measure the <span class="math">\(n\)</span> haystack qubits (ignoring the oracle qubit as its work is done) and almost certainly obtain the needle <span class="math">\(x_0\)</span>.
+    <br/>
+    <br/>
+    This is because the repeated sign changes of the needle state combined with the flips about the mean increase the needle state’s amplitude compared to the rest of the haystack. When this is sufficiently high, a measurement on the haystack qubits will return the needle state with high probability (<span class="math">\(\propto [\text{needle amplitude}]^2\)</span>).
+  </li>
+  </ol>
+
+  <!-- Figure 2 -->
+  <div class="svg-fig" id="fig2-container">
+    <!--
+    <input type="button" value="Ground State" onclick="doGroundState()" />
+    <input type="button" value="Hadamard" onclick="doHadamard()" />
+    <input type="button" value="Oracle" onclick="doOracle()" />
+    <input type="button" value="Mean" onclick="doMean()" />
+    -->
+
+    <div>
+      <div id="prob-div" class="info-div" style="opacity: 0;">\(P(x_0) \approx \)&nbsp;<span id="prob-val"></span></div>
+      <div id="R-div" class="info-div" style="opacity: 0; margin-right: 6px;">\(R = \)&nbsp;<span id="R-val"></span></div>
+    </div>
+    <svg id="fig2"></svg>
+    <div class="fig-caption">
+      <strong>Figure 2.</strong> A graphical representation of the steps listed on the left. Click the 
+
+       <a class="play-icon in-list" style="float: none; margin: 0 2px 0 2px; position: relative; top: 7px;">
+        <i class="material-icons">play_circle_filled</i>
+       </a>
+
+       in each step to show it here. Note that you will need to repeat the actions that comprise step 3 until the needle state has been sufficiently amplified! Try to find the optimal value of <span class="math">\(R\)</span> for this system.
+    </div>
+    <br />
+    <br />
+    <br />
+  </div>
+
+</div>
+
+<p>
+<span class="marginnote" style="margin-top: -40px;">
+  5. Applying steps <em>i-iv</em> is equivalent to applying: 
+
+  <span class="math">
+    \[\begin{align}
+    &amp; \: H^{\otimes n}(2 \ket{0} \bra{0} - I)H^{\otimes n} O \\
+    = &amp; \: (2 H^{\otimes n} \ket{0} \bra{0} H^{\otimes n} - H^{\otimes n} H^{\otimes n}) O
+    \end{align}\]
+  </span>
+
+  We then recall that in this case <span class="math">\(\ket{0}\)</span> is really representing an <span class="math">\(n\)</span>-qubit state <span class="math">\(\ket{00 \cdots 0}\)</span>, and also that <span class="math">\(H \ket{0} = (\ket{0} + \ket{1})/\sqrt{2}\)</span>, so that:
+
+  <span class="math">
+    \[\begin{align}
+    H^{\otimes n} \ket{0} &amp; = \overbrace{(H \ket{0}) \otimes (H \ket{0}) \otimes \cdots \otimes (H \ket{0})}^{n \text{ times}} \\
+    &amp; = \frac{1}{\left(\sqrt{2}\right)^n} \Big( [\ket{0} + \ket{1}] \otimes [\ket{0} + \ket{1}] \otimes \cdots \otimes [\ket{0} + \ket{1}] \Big) \\
+    &amp; = \frac{1}{\sqrt{2^n}} \sum \big\{ \text{All permutations of } n \text{ 1s and 0s} \big\} \\
+    &amp; = \frac{1}{\sqrt{N}} \sum_{x=0}^{N-1} \ket{x} = \ket{\phi}
+    \end{align}\]
+  </span>
+
+  Finally, remember that <span class="math">\(\bra{\chi} A^\dagger = (A \ket{\chi})^\dagger\)</span>, that <span class="math">\(H = H^\dagger\)</span>, and that <span class="math">\(H^2 = I\)</span>. Then we can write:
+
+  <span class="math">
+    \[\begin{align}
+    &amp; \: (2 H^{\otimes n} \ket{0} \bra{0} H^{\otimes n} - H^{\otimes n} H^{\otimes n}) O \\
+    = &amp; \: (2 (H^{\otimes n} \ket{0})(H^{\otimes n} \ket{0})^\dagger - I) O \\
+    = &amp; \: (2 \ket{\phi} \bra{\phi} - I) O \qquad \qquad \qquad \qquad \Box
+    \end{align}\]
+  </span>
+</span>
+</p>
+
+<h2 id="how-many-iterations">How many iterations?</h2>
+
+<p>
+  We said that it is necessary to apply step 3 some number <span class="math">\(R\)</span> of times in order to obtain the needle state with sufficiently high probability. We’ll now look at what value <span class="math">\(R\)</span> might take.
+</p>
+
+<p>
+  First, write our initial state as:
+
+  <span class="math">
+    \[\ket{\psi} = \nu_0 \ket{x_0} + \sum_{x \neq x_0} \eta_0 \ket{x}\]
+  </span>
+
+  Where the subscripts on <span class="math">\(\nu\)</span> and <span class="math">\(\eta\)</span> denote the number of Grover iterations performed. Referring to Step 2 of the above, note that <span class="math">\(\nu_0 = \eta_0 = 1/\sqrt{N}\)</span>. Now consider the action of the Grover iteration on the <span class="math">\(\nu_j\)</span> and <span class="math">\(\eta_j\)</span>:
+</p>
+
+<div class="list-container">
+  <ol style="list-style-type: lower-roman">
+    <li>
+      Action of the oracle is denoted by a prime:
+
+      <span class="math">
+        \[\nu_j^\prime = -\nu_j\]
+      </span>
+
+    </li>
+    <li>
+      Inversion about the mean. Call the mean <span class="math">\(\mu\)</span>:
+
+      <span class="math">
+        \[\mu_i = \frac{1}{N}(\nu_i + (N-1)\eta_i) = \frac{\nu_i - \eta_i}{N} + \eta_i\]
+      </span>
+
+      And so we can see that 
+
+      <span class="math">
+        \[\begin{align}
+        \nu_{j+1} &amp; = 2\mu_j^\prime - \nu_j^\prime \\
+        &amp; = 2\frac{\nu_j^\prime - \eta_j}{N} + 2\eta_j - \nu_j^\prime \\
+        &amp; = \frac{N-2}{N} \nu_j + \frac{2(N-1)}{N} \eta_j \\
+        \eta_{j+1} &amp; = 2\mu_j^\prime - \eta_j \\
+        &amp; = 2\frac{\nu_j^\prime - \eta_j}{N} + 2\eta_j - \eta_j \\
+        &amp; = -\frac{2}{N} \nu_j + \frac{N-2}{N} \eta_j
+        \end{align}\]
+      </span>
+    </li>
+  </ol>
+</div>
+
+<p>
+  It is rather difficult to solve these recurrence relations, but their solutions are given in Ref [<span class="citation">3</span>]. The solutions are:
+
+  <span class="math">
+    \[\begin{align} \nu_j &amp; = \sin([2j+1]\theta) \\ 
+    \eta_j &amp; = \frac{1}{\sqrt{N-1}}\cos([2j+1]\theta)
+    \end{align}\]
+  </span>
+
+  Where <span class="math">\(\sin^2 \theta = 1/N\)</span>. The validity of these solutions can be proven by induction<sup>6</sup>
+
+  <span class="marginnote">
+    6. We prove as follows.
+    <br/> 
+    <strong>Basis case.</strong>
+    Set <span class="math">\(j=0\)</span>. Now insert into the solution:
+
+    <span class="math">
+      \[\begin{align} \nu_0 &amp; = \sin(\theta) \\
+      &amp; = \sin(\arcsin(\frac{1}{\sqrt{N}})) \\
+      &amp; = \frac{1}{\sqrt{N}} \\
+      \eta_0 &amp; = \frac{1}{\sqrt{N-1}}\cos(\theta) \\
+      &amp; = \frac{1}{\sqrt{N-1}}\cos(\arcsin(\frac{1}{\sqrt{N}})) \\
+      &amp; = \frac{1}{\sqrt{N-1}} \sqrt{1 - \frac{1}{N}} \\
+      &amp; = \frac{1}{\sqrt{N-1}} \sqrt{\frac{N-1}{N}} = \frac{1}{\sqrt{N}}
+      \end{align}\]
+    </span>
+
+    Which satisfy the boundary conditions we noted in the main text.
+    <br/>
+
+    <strong>Inductive step.</strong>
+
+    Assume the solution is valid for <span class="math">\(j\)</span>, now test for <span class="math">\(j+1\)</span>:
+
+    <span class="math">
+      \[\begin{align} \nu_{j+1} &amp; = \sin([2(j+1)+1]\theta) \\
+      &amp; = \sin([2j + 1]\theta + 2\theta) \\
+      &amp; = \sin([2j + 1]\theta) \cos(2\theta) + \cos([2j + 1]\theta) \sin(2 \theta) \\
+      &amp; = \nu_j (\cos^2\theta - \sin^2\theta) + \sqrt{N-1} \eta_j (2 \cos\theta \sin\theta) \\
+      &amp; = \nu_j (\frac{N-1}{N} - \frac{1}{N}) + \sqrt{N-1} \eta_j (2 \sqrt{\frac{N-1}{N}} \frac{1}{\sqrt{N}}) \\
+      &amp; = \frac{N-2}{N} \nu_j + \frac{2(N-1)}{N} \eta_j \\
+      \eta_{j+1} &amp; = \frac{1}{\sqrt{N-1}} \cos([2(j+1) + 1]\theta) \\
+      &amp; = \frac{1}{\sqrt{N-1}} \cos([2j + 1]\theta + 2 \theta) \\
+      &amp; = \frac{1}{\sqrt{N-1}} \big( \cos([2j+1]\theta) \cos(2\theta) - \sin([2j+1]\theta) \sin(2\theta) \big) \\
+      &amp; = \frac{1}{\sqrt{N-1}} ( \sqrt{N-1} \eta_j \frac{N-2}{N} - 2 \nu_j \frac{\sqrt{N-1}}{N} ) \\
+      &amp; = -\frac{2}{N} \nu_j + \frac{N-2}{N} \eta_j
+      \end{align}\]
+    </span> 
+
+    Q.E.D.
+
+  </span>
+
+  . As we want to maximise the probability of measuring the needle, we clearly want to maximise <span class="math">\(\nu_j\)</span>. The maximum of <span class="math">\(\sin(x)\)</span> is at <span class="math">\(x = \pi/2\)</span> and so we want <span class="math">\((2j + 1)\theta = \pi/2\)</span>. Considering that <span class="math">\(j\)</span> must be an integer, we want:
+
+  <span class="math">
+    \[j = \left \lfloor \frac{\pi - 2\theta}{4\theta} \right \rfloor\]
+  </span> 
+
+  Now see that since <span class="math">\(\sin\theta \approx \theta\)</span> for small <span class="math">\(\theta\)</span> and recalling that <span class="math">\(\sin\theta = 1/\sqrt{N}\)</span>:
+
+  <span class="math">
+    \[j \approx \left \lfloor \frac{\pi - 2/\sqrt{N}}{4/\sqrt{N}} \right \rfloor \approx \left \lfloor \frac{\pi}{4}\sqrt{N} \right \rfloor\]
+  </span>
+
+  And thus we choose <span class="math">\(R\)</span> to be the above value. Note an interesting - and characteristically quantum - implication of the sinusoidal form for <span class="math">\(\nu_j\)</span>: we can perform too many iterations of the algorithm! In the classical world we’d expect our extra work to reap us some reward (or at least not to make things <em>worse</em>) but here the performance of the algorithm is periodic in <span class="math">\(R\)</span> so we need to stop at exactly the right point in order to find our needle.
+</p>
+
+<div class="references">
+<h2>References</h2>
+<p>[1] L. K. Grover, “Quantum Mechanics Helps in Searching for a Needle in a Haystack,” <em>Phys. Rev. Lett.</em>, vol. 79, no. 2, pp. 325–328, Jul. 1997.</p>
+<p>[2] M. A. Nielsen and I. L. Chuang, <em>Quantum Computation and Quantum Information</em>, 10th Anniversary Edition. Cambridge ; New York: Cambridge University Press, 2010.</p>
+<p>[3] M. Boyer, G. Brassard, P. Hoeyer, and A. Tapp, “Tight bounds on quantum searching,” <em>Fortschritte der Physik</em>, vol. 46, no. 4-5, pp. 493–505, Jun. 1998.</p>
+</div>
+</div>
+
+</body>
+<script type="text/javascript" src="js/fig1.js"></script>
+<script type="text/javascript" src="js/fig2.js"></script>
+</html>

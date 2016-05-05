@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Grover's Search Algorithm</title>
+  <link rel="stylesheet" href="css/Serif/cmun-serif.css"/>
+  <link rel="stylesheet" href="css/tufte.css"/>
+  <link rel="stylesheet" href="css/grover-figures.css"/>
+  <link href='https://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
+
+  <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      showMathMenu: false,
+      "HTML-CSS": {
+        scale: 90
+      },
+      TeX: {
+      Macros: {
+        braket: ['{\\langle #1 \\rangle}', 1],
+        Abs: ['\\left\\lvert #2 \\right\\rvert_{\\text{#1}}', 2, ""],
+        bra: ['{\\left\\langle #1\\right|}',1], 
+        ket: ['{\\left| #1\\right\\rangle}',1], 
+      }}
+    });
+  </script>
+  <script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+
+  <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+  <!-- Global D3 variables etc -->
+  <script type="text/javascript"> 
+    var n_bits = 3; // Number of qubits
+  </script>
+
+<body>
+
+    <div id = "tufte_container">
+    <!-- Figure 1 -->
+    <script type="text/javascript" src="js/fig1.js"></script>
+    </div>
+
+</body>
+</html>
