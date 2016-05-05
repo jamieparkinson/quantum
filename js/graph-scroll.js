@@ -10,6 +10,7 @@ function graphScroll() {
       isBelow = null,
       container = d3.select('body'),
       containerStart = 0,
+      slideOffset = -1,
       belowStart,
       eventId = Math.random()
 
@@ -27,34 +28,41 @@ function graphScroll() {
       i = i1
     }
 
-    var isBelow1 = pageYOffset > (belowStart - 0.3*window.innerHeight)
+    var isBelow1 = pageYOffset > (belowStart - 0.3*window.innerHeight);
     if (isBelow != isBelow1){
       isBelow = isBelow1
       graph.classed('graph-scroll-below', isBelow)
+      if (isBelow) {
+        graph.style("right", null);
+      }
     }
     var isFixed1 = !isBelow && pageYOffset > (containerStart - 0.3*window.innerHeight)
     if (isFixed != isFixed1){
-      isFixed = isFixed1
-      graph.classed('graph-scroll-fixed', isFixed)
+      isFixed = isFixed1      
+      graph.classed('graph-scroll-fixed', isFixed);
+      if (isFixed) {
+        graph.style("right", 0.5*(window.innerWidth - 1300) - 14.5  + "px");
+      }
     }
 
     // My additions to move the <ol> of algorithm steps
     var containerTopMovey = pageYOffset - containerStart + 0.8*window.innerHeight;
-   
-    var moveLeft = 150;
+    
+    var moveLeft = slideOffset;
     var moveVelocity = 0.8;
 
     if (containerTopMovey > 0 && moveVelocity*containerTopMovey < moveLeft) {
-      container.style("margin-left", "-" + moveVelocity*containerTopMovey + "px");
+      container.style("left", "-" + moveVelocity*containerTopMovey + "px");
       resize();
       graph.style("opacity", Math.min(moveVelocity*containerTopMovey/(0.75*moveLeft), 1));
     } else if (containerTopMovey > 0) {
       graph.style("opacity", 1);
-      container.style("margin-left", "-" + moveLeft + "px");
+      container.style("left", "-" + moveLeft + "px");
     } else if (containerTopMovey < 0) {
-      container.style("margin-left", null);
+      container.style("left", null);
       graph.style("opacity", 0);
     }
+
   }
 
   function resize(){
@@ -69,6 +77,9 @@ function graphScroll() {
 
     containerStart = containerBB.top + pageYOffset
     belowStart = containerBB.bottom - graphBB.height  + pageYOffset
+    if (slideOffset == -1) { 
+      slideOffset = container.node().getBoundingClientRect().left - 0.5*(window.innerWidth - 1300);
+    }
   }
 
   function keydown() {
@@ -137,7 +148,7 @@ function graphScroll() {
     d3.select(window)
         .on('scroll.gscroll'  + eventId, reposition)
         .on('resize.gscroll'  + eventId, resize)
-        .on('keydown.gscroll' + eventId, keydown)
+        //.on('keydown.gscroll' + eventId, keydown) Disabled for my purposes
     
     resize()
     d3.timer(function() {

@@ -152,7 +152,7 @@
   . Steps 1 and 2 are just to get the system in an appropriate starting state, and step 3 is where the “magic” happens.
 </p>
 
-<div class="list-container" id="steps-container" style="margin-left: -180px;">
+<div class="list-container" id="steps-container">
   <ol style="list-style-type: decimal" id="steps-list">
 
     <li>
@@ -185,11 +185,6 @@
       <ol style="list-style-type: lower-roman; margin-top: 15px">
         <li>
           <em>Apply the oracle operator <span class="math">\(O\)</span>, defined above, to all the qubits.</em>
-
-          <a class="play-icon in-list" onclick="doOracle()" id="oracleBtn">
-            <i class="material-icons">play_circle_filled</i>
-          </a>
-
         </li>
         <li>
           <em>Apply the Hadamard transform <span class="math">\(H^{\otimes n}\)</span> to the haystack qubits.</em>
@@ -219,13 +214,27 @@
         \[\ket{\phi} = \frac{1}{\sqrt{N}} \sum_{x=0}^{N-1} \ket{x}\]
       </span>
 
-      It is extremely useful to note that the part of this operation in the brackets (steps <span class="math">\(ii-iv\)</span>) can be seen geometrically as an <em>inversion about the mean</em>.
+      It is extremely useful to note that the part of this operation in the brackets (steps <span class="math">\(ii-iv\)</span>) can be seen geometrically as an <em>inversion about the mean</em>. This means that the whole Grover iteration can be seen as the repeated application of 2 operations:
 
-      <a class="play-icon in-list" onclick="doMean()" id="meanBtn">
-        <i class="material-icons">play_circle_filled</i>
-      </a>
+      <ol style="list-style-type: lower-roman; display: block; width: 45%; margin: 20px auto 5px auto;">
+        <div style="float: right; margin-left: -7px; margin-top: 11px;">
+          <img src="repeat.svg" alt="Repeat" style="margin: 0; opacity: 0.6"/>
+        </div>
+        <li>
+          <em>Oracle</em>
+          <a class="play-icon in-list" onclick="doOracle()" id="oracleBtn">
+            <i class="material-icons">play_circle_filled</i>
+          </a>
+        </li>
+        <li>
+          <em>Inversion about the Mean</em>
+          <a class="play-icon in-list" onclick="doMean()" id="meanBtn">
+            <i class="material-icons">play_circle_filled</i>
+          </a>
+        </li>
+      </ol>
 
-      <br/><br/>
+      <br/>
 
       Let’s consider why this is. The operator <span class="math">\(F = 2(\ket{\phi} \bra{\phi} - I)\)</span> leaves <span class="math">\(\ket{\phi}\)</span> invariant and flips the sign of any state orthogonal to <span class="math">\(\ket{\phi}\)</span>. As <span class="math">\(\ket{\phi}\)</span> is the uniform superposition over all <span class="math">\(n\)</span>-qubit states, the overlap of it and any other <span class="math">\(n\)</span>-qubit state expressed in the computational basis, <span class="math">\(\ket{\psi} = \sum_x a_x \ket{x}\)</span>, is simply the sum of <span class="math">\(\ket{\psi}\)</span>’s eigenvalues multiplied by <span class="math">\(\ket{\phi}\)</span>’s normalisation factor, <span class="math">\(1/\sqrt{N}\)</span>:
 
