@@ -34,7 +34,7 @@ svg.append("image").attr("id", "resetBtn")
                    .attr("height", 25)
                    .attr("x", w_algplot - 30)
                    .attr("y", h_algplot - 30)
-                   .attr("xlink:href", "replay.svg")
+                   .attr("xlink:href", "images/replay.svg")
                    .attr("opacity",0.3)
                    .on("mouseover", function() {
                       d3.select(this).attr("opacity", 0.6);
