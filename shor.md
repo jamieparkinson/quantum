@@ -43,7 +43,7 @@ $$\gcd(a,b) =
 a & b = 0 \\
 \gcd(b, a \Mod{b}) & b > 0
 \end{cases}$$
-Which runs quadratically in the number of digits in $a$ and $b$.
+Which requires a number of operations scaling quadratically in the number of digits in $a$ and $b$.
 </sidenote>
 $\gcd(\alpha \pm 1, N)$ gives us a non-trivial factor of $N$. 
 
@@ -70,36 +70,71 @@ This rather unexpected method for factorisation is all very well, but we've glos
 
 ## The Quantum Fourier Transform
 
-A very familiar operation for physicists is the Fourier transform, defined (up to normalisation conventions) as:
+A very familiar operation for physicists is the Fourier transform, defined (up to normalisation conventions<sidenote>It's worth noting here that, for whatever reason, quantum information theorists usually use a positive sign in the exponent for the Fourier transform and a negative for the inverse transform. This is opposite to what we usually come across in the rest of physics/maths.</sidenote>) as:
 
 $$\hat{f}(\omega) = \int_{-\infty}^{\infty} f(x) \, e^{i \omega x} \ \text{d} x$$
 
-It's quite clear to see that if $f(x)$ is periodic the integral does not converge. However, if it is periodic over an interval $[0,N]$, and we discretise $x$ such that we can define a series $\{x_i\}$ of length $N$, then we can obtain<sidenote>
-Uniformly partition $[-\infty, \infty]$ by points $x_i$, and write the integral in the Fourier transform as a Riemann sum:
-$$\begin{align}
-X(\omega) & = \sum_{m = -\infty}^{\infty} \delta f(x_m) \, e^{i \omega x_m} \\
-X(f) & = \sum_{m = -\infty}^{\infty} \delta f(x_m) \, e^{2 \pi i f m \delta}
-\end{align}$$
-Where $\delta$ is the spacing between the points. Now, assume that $f(x_i)$ is periodic with period $N$, such that:
-$$f(x_n) = f(x_{n - m N})$$
-Where $m$ is some integer. We can then take our discretised Fourier transform over 1 period of the sequence:
-$$\begin{align}
-X(k / N \delta) & = \sum_{m = -\infty}^{\infty} \sum_{n = 1}^{N} \delta f(x_{n - m N}) \, e^{\frac{2 \pi i k (n - m N) \delta}{N \delta}} \\
-& = \frac{1}{N \delta} \left(\sum_{m = -\infty}^{\infty} e^{-2 \pi i m}\right) \cdot \left(\sum_{n = 0}^{N - 1} f(x_n) \, e^{2 \pi i k n / N} \right)
-\end{align}$$
-Where the 2nd term (the sum over $n$) is the DFT. It should be clear that we can choose $\delta$ however we wish and so, in order to obtain the normalisation factor used in our convention, we choose $\delta = 1/\sqrt{N}$. Note that in the main text we write $x_j$ for what is $f(x_j)$ in this term.
-</sidenote> the related Discrete Fourier Transform (DFT):
+For discrete $x$ - that is to say, for vectors of length $Q$ with values $x_i$ - we can define the related Discrete Fourier Transform (DFT):
 
-$$y_k = \frac{1}{\sqrt{N}} \sum_{j = 0}^{N - 1} x_j \, e^{2 \pi i j k / N}$$
+$$y_k = \frac{1}{\sqrt{Q}} \sum_{j = 0}^{Q - 1} x_j \, e^{2 \pi i j k / Q}$$
 
 Now, we can define a very similar Quantum Fourier Transform (QFT):
 
-$$\ket{j} \rightarrow \frac{1}{\sqrt{N}} \sum_{k = 0}^{N - 1} e^{2 \pi i j k / N} \ket{k}$$
+$$\ket{j} \xrightarrow{QFT} \frac{1}{\sqrt{Q}} \sum_{k = 0}^{Q - 1} e^{2 \pi i j k / Q} \ket{k}$$
 
 Where $\ket{j}$ and $\ket{k}$ are $n$-qubit states expressed in binary notation<sidenote>
 We can write $n$-qubit states using only one number:
 $$\ket{x} \equiv \ket{x_1 x_2 \cdots x_n}$$ where $$x = x_1 2^{n-1} + x_2 2^{n-2} + \cdots + x_n 2^0$$
 For example, $\ket{5} \equiv \ket{0101}$. The important thing here is to remember that some state $\ket{x}$ is **not** a state of a single qubit; it is a state of $n$ qubits.
-</sidenote>, and $N = 2^n$. Given that the exponential coefficient in the above can be seen as the $(N/j)$th roots of unity, it's clear that the QFT gives us a uniform superposition of states, with differing phase factors.
+</sidenote> and $Q = 2^n$. As we know that complex numbers of the form $e^{i \theta}$ lie on the unit circle in the complex plane<sidenote>From the Euler identity: $e^{i \theta} = \cos(\theta) + i \sin(\theta)$</sidenote> we can see that the QFT takes some state $\ket{j}$ to a uniform superposition of states running from $\ket{0}$ to $\ket{Q-1}$, but where these states have different phase factors, uniformly distributed with an angular distance between them of $j/Q$. Bearing this in mind, the action of the QFT is illustrated below.
+
+### Finding the Period Using the QFT
+
+The utility of the QFT is in the fact that its result has peaks at positions related to the period of the original coefficients. This is quite well-known (consider the Fourier transform's ubiquity in spectral analysis) but is also easy to see. If we start out with:
+
+$$\begin{align}
+\sum_x A(x) \ket{x} & \xrightarrow{QFT} \sum_x B(x) \ket{x} \\
+B(x) = \frac{1}{\sqrt{Q}} & \sum_{j = 0}^{Q - 1} e^{2 \pi i j x / Q} A(j) \\
+\end{align}$$
+
+Then if $A(x)$ is periodic with period $r$ and we define $R$ as the nearest integer to $Q / r$, we see that:
+
+$$\begin{align}
+B(x) & = \frac{1}{\sqrt{Q}} \sum_{m = 0}^{R - 1} \sum_{j = 0}^{Q - 1} e^{2 \pi i (j + m r) x / Q} A(j + m r) \\
+& = \frac{1}{\sqrt{R}} \frac{1}{\sqrt{Q}} \sum_{m = 0}^{R - 1} e^{2 \pi i m x / R} \sum_{j = 0}^{Q - 1} e^{2 \pi i j x / Q} A(j) \\
+& = \frac{\sqrt{r}}{Q} \left( \frac{1 - e^{2 \pi i x}}{1 - e^{2 \pi i x / R}} \right) \sum_{j = 0}^{Q - 1} e^{2 \pi i j x / Q} A(j)
+\end{align}$$
+
+In this last term, notice that as as $x$ approaches integer multiples of $R$, the denominator in the brackets tends to 0 and hence $B(x)$ blows up: as we claimed, the QFT has peaks related to the period of the original coefficients, specifically at integer multiples of $Q / r$. It's worth explicitly pointing out that this isn't *by itself* very useful to us as we don't actually know all the values of $B(x)$; we just have a superposition of them so any measurement will give us $B(x)$ only for some specific value of $x$. However, this is not an insurmountable obstacle, as we'll see in the next section.
+
+## The Continued Fraction Expansion
+
+Through a bit of hand-waving, we suggested above that it will be possible for us to know something close to the value of an integer multiple of $Q / r$. But how can we find $r$ from this?
+
+It turns out (again, refer to [[@nielsen_quantum_2010]]) that given a real and rational number $x$, theni f $$ \left| x - \frac{j}{r} \right| \leq \frac{1}{2 r^2} $$ then if we express $x$ as a continued fraction<sidenote>
+Continued fractions are a way of representing real numbers with only integers, in forms that look like: $$ x = a_0 + \frac{1}{a_1 + \frac{1}{a_2 + \frac{1}{\ldots + \frac{1}{a_M}}}} $$ where the $a_m$ are integers. We can obtain them from, say, a usual fractional representation by an iterative process: we first take $a_0 = \lfloor x \rfloor$ as the integer part of $x$, then find the reciprocal of the fractional part, then find the integer part of the fractional part and identify this as $a_1$, and then repeat this procedure iteratively until the fractional part is 0. An example makes this clear: let $x = 2.35 = 2 \frac{7}{20} $. Now $$\begin{align} x & = 2 + \frac{7}{20} = 2 + \frac{1}{20/7} \\ & = 2 + \frac{1}{2 + \frac{6}{7}} = 2 + \frac{1}{2 + \frac{1}{7/6}} \\ & = 2 + \frac{1}{2 + \frac{1}{1 + \frac{1}{6}}} \end{align}$$
+</sidenote>, $j/r$ is a *convergent* of it - that is to say, a number obtained by taking the first $n$ terms of the fraction. Let's say $x$ is an approximation to $j/r$ and that we know it to a precision of $b$ bits. Then simple arithmetic tells us that $$ \left| x - \frac{j}{r} \right| \leq \frac{1}{2^{b}} $$, so in order to exploit the continued fraction property we must have $2^b \geq 2r^2$.
+
+This is, for now, enough knowledge for us to define the period-finding algorithm for the modular exponentiation function and to look at its behaviour and its subtleties.
+
+## The Period-Finding Algorithm
+
+We start off with some composite number $N$, and allow ourselves access to 2 "registers" of $n$ qubits, choosing $n$ to satisfy $N^2 \leq Q \leq 2 N^2$ where $Q = 2^n$ as before. Define a unitary operator for calculating<sidenote>
+A little thought shows that the modular exponentiation function is not very easy to calculate. $a^j$ is potentially a *very* large number (requiring a lot of memory to be stored in a computer) and a naive calculation of the function requires a number of operations that scales linearly with the exponent $j$. It turns out we can calculate the function in a way that uses less memory and scales with $\log j$. We first write $j$ as a sum of powers of 2: $$ j = \sum_i c_i 2^i $$ And so we can write $a^j$ as: $$ a^j = a^{\sum_i c_i 2^i} = \prod_i \left( a^{2^i} \right)^{c_i} $$ Recalling that $$ [x \Mod{N}] \cdot [y \Mod{N}] = x \cdot y \Mod{N} $$ We can then write: $$ a^j \Mod{N} = \prod_i \left[ \left( a^{2^i} \right)^{c_i} \Mod{N} \right] $$ Which contains comparatively small numbers at each multiplication, thus saving memory. </sidenote> the modular exponentiation function:
+
+$$ U_{ME} ( \ket{j} \ket{k} ) \rightarrow \ket{j} ket{a^j \Mod{N}} $$
+
+Where $a$ is an integer that satisfies the previously discussed requirement of sharing no factors with $N$. Now we can define the period-finding algorithm:
+
+1. Prepare the registers with all qubits in the ground state: $$\ket{\psi_1} = \ket{0}^{\otimes n} \ket{0}^{\otimes n}$$
+2. Put the first register into a state of uniform superposition (ie apply $H^{\otimes n}$ where $H$ is the Hadamard gate). Then apply the modular exponentiation unitary to the combined registers. $$ \ket{\psi_2} = \frac{1}{\sqrt{Q}} \sum_{j = 0}^{Q - 1} \ket{j} \ket{a^j \Mod{N}} $$
+3. Measure the 2nd register, obtaining some (random) state $\ket{a^{j_0} \Mod{N}}$. Then the first register collapses to: $$ \ket{\psi_3} = \frac{1}{\sqrt{R}} \sum_{m = 0}^{R - 1} \ket{j_0 + m r} $$ Where, as before, $r$ is the period of the modular exponentiation function and $R$ is the nearest integer to $Q / r$. The reason we get this is that, because $a^j \Mod{N}$ is periodic, there are $R$ points spaced at intervals of $r$ at which it takes the measured value.
+4. Apply the QFT to the state, and rewrite in the same way as was done in the previous section. $$\begin{align} \ket{\psi_3} \xrightarrow{QFT} \ket{\psi_4} & = \frac{1}{\sqrt{Q}} \frac{1}{\sqrt{R}} \sum_{k = 0}^{Q - 1} \sum_{m = 0}^{R - 1} e^{2 \pi i (j_0 + m r) k / Q} \ket{k} \\ & = \frac{1}{\sqrt{QR}} \sum_{k = 0}^{Q - 1} e^{2 \pi i j_0 k / Q} \underbrace{ \left( \sum_{m = 0}^{R - 1} e^{2 \pi i m r k / Q} \right)}_{\alpha(k)} \ket{k} \\ & = \frac{1}{\sqrt{QR}} \sum_{k = 0}^{Q - 1} \omega^k \alpha(k) \ket{k} \end{align}$$
+Where $\omega = e^{2 \pi i j_0 / Q}$, the powers of which all have a magnitude of 1, and so the probability of measuring some state $k$ is wholly dependent on $\alpha(k)$.
+5. Measure the first register. Let's see how likely it is that we'll measure a value of $k$ that is close to an integer multiple of $Q / r$. Call this value $\kappa = j Q / r + \epsilon$, where $j$ is an integer and $\epsilon$ is a small real number with magnitude $\leq 1/2$ that "makes up the difference" to the nearest integer. $$\begin{align} \Pr(\text{measure } \kappa) & = \frac{1}{Q R} \left| \sum_{m = 0}^{R - 1} e^{2 \pi i m r (j Q / r + \epsilon) / Q} \right|^2 \\ & = \frac{1}{Q R} \left| \sum_{m = 0}^{R - 1} e^{2 \pi i m r \epsilon / Q} \right|^2 \\ & = \frac{1}{Q R} \frac{\sin^2 (\pi \epsilon R r / Q)}{\sin^2 (\pi \epsilon r / Q)} \\ & \approx \frac{1}{Q R} \left( \frac{\sin(\pi\epsilon)}{\pi\epsilon r / Q} \right)^2 \\ & = frac{1}{r}\left( \frac{\sin(\pi \epsilon)}{\pi\epsilon} \right)^2 \end{align}$$ Where the approximation comes from the fact that $R$ is $Q / r$ rounded to the nearest integer, and from the small angle approximation. As $|\epsilon| \leq 1/2$ we can then easily see that: $$\Pr(\text{measure } \kappa) \geq \frac{1}{r} \left( \frac{1}{\pi / 2} \right)^2 = \frac{4}{\pi^2 r}$$ So, as there are at least $r - 1$ integer multiples of $Q / r$ (ie this number of possible values of $j$), for large $r$ we measure a $k$ close to an integer multiple of $Q / r$ at least $4/\pi^2 \approx$ 40% of the time!
+6. As we have chosen $n$ so that $N^2 \leq 2^n \leq 2N^2$, we know $\kappa$ to sufficient precision to use the continued fraction expansion to find some $j^\prime/r^\prime = j/r$. As shown in the first section, we can check to see whether $r^\prime = r$ by testing to see if $a^{r^\prime} \Mod{N} = 1$. If this is the case, we are done: we have found $r$.
+	However, we might be unfortunate and find that $j$ and $r$ share a factor, meaning that $r^\prime$ is actually a *factor* of $r$. We can try to get around this without starting again. If we assume that the common factor of $j$ and $r$ is small, then we can test a few small multiples of $r^\prime$ to see if they are in fact $r$, which is classically quite easy to do. Even more cleverly, we could perform 2 phase estimations thus obtaining $r^\prime_1$ and $r^\prime_2$, and could then try their lowest common multiple as a candidate for $r$. 
+
+And so, using the properties of the QFT, we have found the period of the modular exponentiation function. Given the number-theoretic results of the first section, this means we can find the factors of $N$.
 
 ## References
