@@ -8,8 +8,7 @@ body { width: 87.5%;
        font-family: 'Computer Modern Serif';
        padding-bottom: 20rem;
        color: #000; /* Changed to black */
-       max-width: 1200px;
-       overflow-x: hidden; }
+       max-width: 1200px; }
 
 h1 {  font-family: 'Computer Modern Serif';
       font-weight: bold;
@@ -151,6 +150,10 @@ ol {padding-left: 7%;}
                 color: #333;  }
 .sidenote a {font-size: 1.0rem;
                 color: #333;  }
+
+.marginnote span.math {
+  font-size: 1.1rem;
+}
 
 li .marginnote  { float: right;
                           clear: right;
