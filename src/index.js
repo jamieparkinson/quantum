@@ -1,9 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import App from './App';
-import './index.css';
+import {
+    Router,
+    browserHistory
+} from 'react-router';
 
-ReactDOM.render(
-  <App />,
-  document.getElementById('root')
-);
+import routes from './routes'
+import './components/common/tufte.css';
+
+ReactDOM.render((
+    <Router history={browserHistory}>
+        {routes}
+    </Router>
+), document.getElementById('root'));
